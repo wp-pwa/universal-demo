@@ -1,4 +1,5 @@
 require('colors')
+const path = require('path')
 const express = require('express')
 const webpack = require('webpack')
 const noFavicon = require('express-no-favicons')
@@ -18,9 +19,8 @@ app.use(noFavicon())
 
 let isBuilt = false
 
-const done = () =>
-  !isBuilt &&
-  app.listen(3000, () => {
+const done = () => !isBuilt
+  && app.listen(3000, () => {
     isBuilt = true
     console.log('BUILD COMPLETE -- Listening @ http://localhost:3000'.magenta)
   })
@@ -30,6 +30,14 @@ if (DEV) {
   const clientCompiler = compiler.compilers[0]
   const options = { publicPath, stats: { colors: true } }
   const devMiddleware = webpackDevMiddleware(compiler, options)
+
+  app.use('/static/components-Foo.js', (_req, res) => {
+    console.log('/static/components-Foo.js')
+    res.type('application/javascript')
+    setTimeout(() => {
+      res.sendFile(path.resolve(__dirname, '../buildClient/components-Foo.js'))
+    }, 5000)
+  })
 
   app.use(devMiddleware)
   app.use(webpackHotMiddleware(clientCompiler))
@@ -41,7 +49,6 @@ else {
   webpack([clientConfigProd, serverConfigProd]).run((err, stats) => {
     const clientStats = stats.toJson().children[0]
     const serverRender = require('../buildServer/main.js').default
-
     app.use(publicPath, express.static(outputPath))
     app.use(serverRender({ clientStats }))
 

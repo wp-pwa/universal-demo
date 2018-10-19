@@ -9,13 +9,21 @@ import NotFound from './components/NotFound'
 // Its great for complex folder structures. You can leverage code completion
 const determineHowToLoad = ({ page }) => typeof page !== 'string' ? () => page() : import(`./${page}`)
 
+const promiseCallbacks = {}
+
 const UniversalComponent = universal(determineHowToLoad, {
   onError: error => {
     throw error
   },
   minDelay: 1200,
   loading: Loading,
-  error: NotFound
+  error: NotFound,
+  onLoad: (module, { isServer }, { page }) => {
+    if (!isServer && promiseCallbacks[page]) {
+      console.log(page)
+      promiseCallbacks[page](page)
+    }
+  }
 })
 
 UniversalComponent.propTypes = {
@@ -39,5 +47,11 @@ UniversalComponent.propTypes = {
 }
 
 const loadComponent = file => universal(determineHowToLoad({ page: file }))
+
+const importPromise = ({ page }) => new Promise(resolve => {
+  promiseCallbacks[page] = resolve
+  UniversalComponent.preload({ page })
+})
+
 export default UniversalComponent
-export { loadComponent, universal }
+export { loadComponent, universal, importPromise }

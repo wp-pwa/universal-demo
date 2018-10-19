@@ -1,8 +1,10 @@
+import 'babel-polyfill'
 import React from 'react'
 import ReactDOM from 'react-dom'
 import createHistory from 'history/createBrowserHistory'
 import { AppContainer } from 'react-hot-loader'
 import App from './components/App'
+import { importPromise } from './UniversalComponent'
 
 const history = createHistory()
 
@@ -20,4 +22,9 @@ if (process.env.NODE_ENV === 'development' && module.hot) {
   })
 }
 
-render(App)
+(async () => {
+  console.log('loading Foo..')
+  await importPromise({ page: 'components/Foo' })
+  console.log('loaded Foo..')
+  render(App)
+})()
